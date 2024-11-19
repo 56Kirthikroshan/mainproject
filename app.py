@@ -22,7 +22,7 @@ model = load_model(MODEL_PATH)
 
 
 # Class labels
-class_labels = {0: "Abnormal", 1: "Normal"}
+class_labels = {0: "normal", 1: "Abormal"}
 import streamlit as st
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
