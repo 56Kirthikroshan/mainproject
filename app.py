@@ -1,53 +1,73 @@
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
+from PIL import Image
 import numpy as np
 import streamlit as st
-from PIL import Image
 import gdown
 import os
 
-# Path to save model
+# Model path
 MODEL_PATH = "dnb.keras"
 
-# Check if the model file already exists locally, if not, download it
-if not os.path.exists(MODEL_PATH):
-    # Google Drive shareable link
-    url = "https://drive.google.com/uc?export=download&id=1JafYOKCVMi8g9e2rti4Utp_aVjpnPDxJ"
-    gdown.download(url, MODEL_PATH, quiet=False)
+# Function to download the model if it doesn't exist
+def download_model():
+    if not os.path.exists(MODEL_PATH):
+        # Google Drive link to the model file
+        url = "https://drive.google.com/uc?export=download&id=1JafYOKCVMi8g9e2rti4Utp_aVjpnPDxJ"
+        st.write("Downloading model file...")
+        gdown.download(url, MODEL_PATH, quiet=False)
 
-# Load the model
-model = load_model(MODEL_PATH)
+# Load the model with error handling
+def load_trained_model():
+    try:
+        model = load_model(MODEL_PATH)
+        st.write("Model loaded successfully.")
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
+
+# Preprocess uploaded image for prediction
+def preprocess_image(image_file):
+    image = Image.open(image_file)
+    image = image.convert("RGB")  # Ensure it's in RGB format
+    image = image.resize((224, 224))  # Resize to model's expected input shape
+    image = img_to_array(image) / 255.0  # Normalize pixel values to [0, 1]
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    return image
+
+# Initialize app UI
+st.title("Hydronephrosis Detector")
+st.write("Upload an image to check if it's Normal or Abnormal.")
+
+# Download and load the model
+download_model()
+model = load_trained_model()
 
 # Class labels
 class_labels = {0: "Abnormal", 1: "Normal"}
 
-# Streamlit UI
-st.title("Hydronephrosis Detector")
-st.write("Upload an image to check if it's normal or abnormal.")
-
-# Image upload widget
-uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "png", "jpeg"])
+# File uploader
+uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Display the uploaded image
+    # Display uploaded image
     st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-    st.write("Processing...")
+    st.write("Processing the image...")
 
-    # Preprocess the image
-    image = Image.open(uploaded_file)
-    image = image.convert("RGB")  # Ensure the image is in RGB format
-    image = image.resize((224, 224))  # Resize to 224x224 as expected by the model
-    image = img_to_array(image) / 255.0  # Normalize pixel values
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    # Preprocess image
+    image = preprocess_image(uploaded_file)
 
-    # Make prediction
-    prediction = model.predict(image)  # Returns a numpy array
+    # Make predictions
+    if model:
+        prediction = model.predict(image)  # Returns probabilities
+        st.write(f"Prediction probabilities: {prediction}")
 
-    # Debug: Display prediction probabilities
-    st.write(f"Prediction probabilities: {prediction}")
+        # Determine the class
+        predicted_class = 1 if prediction[0][0] > 0.5 else 0  # Binary classification threshold
+        result = class_labels[predicted_class]
 
-    # Determine class based on threshold
-    predicted_class = 1 if prediction[0][0] > 0.5 else 0  # Threshold: 0.5
-    result = class_labels[predicted_class]
-
-    st.success(f"Result: {result}")
+        # Display result
+        st.success(f"Prediction: {result}")
+    else:
+        st.error("Model could not be loaded. Please try again later.")
