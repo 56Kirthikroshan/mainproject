@@ -9,12 +9,13 @@ import os
 
 
 # Path to save model
-MODEL_PATH = "model.h5"
+MODEL_PATH = "dnb.keras"
 
 # Check if the model file already exists locally, if not, download it
 if not os.path.exists(MODEL_PATH):
     # Google Drive shareable link
-    url = "https://drive.google.com/uc?export=download&id=1Fi3LBLzDAcldnIo5mQVN5VmvLEeV1uX_"
+    url = "https://drive.google.com/uc?export=download&id=1JafYOKCVMi8g9e2rti4Utp_aVjpnPDxJ"
+
     gdown.download(url, MODEL_PATH, quiet=False)
 
 # Load the model
@@ -22,7 +23,7 @@ model = load_model(MODEL_PATH)
 
 
 # Class labels
-class_labels = {0: "normal", 1: "Abormal"}
+class_labels = {0: "Abnormal", 1: "Normal"}
 import streamlit as st
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
