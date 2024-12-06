@@ -3,10 +3,8 @@ from tensorflow.keras.preprocessing.image import img_to_array
 import numpy as np
 import streamlit as st
 from PIL import Image
-
 import gdown
 import os
-
 
 # Path to save model
 MODEL_PATH = "dnb.keras"
@@ -15,29 +13,15 @@ MODEL_PATH = "dnb.keras"
 if not os.path.exists(MODEL_PATH):
     # Google Drive shareable link
     url = "https://drive.google.com/uc?export=download&id=1JafYOKCVMi8g9e2rti4Utp_aVjpnPDxJ"
-
     gdown.download(url, MODEL_PATH, quiet=False)
 
 # Load the model
 model = load_model(MODEL_PATH)
 
-
 # Class labels
 class_labels = {0: "Abnormal", 1: "Normal"}
-import streamlit as st
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
-from PIL import Image
-import numpy as np
 
-# Load the trained model
-MODEL_PATH = "model.h5"
-model = load_model(MODEL_PATH)
-
-# Class labels
-class_labels = {0: "abnormal", 1: "Normal"}
-
-# Streamlit  UI
+# Streamlit UI
 st.title("Hydronephrosis Detector")
 st.write("Upload an image to check if it's normal or abnormal.")
 
@@ -56,19 +40,14 @@ if uploaded_file is not None:
     image = img_to_array(image) / 255.0  # Normalize pixel values
     image = np.expand_dims(image, axis=0)  # Add batch dimension
 
-
     # Make prediction
     prediction = model.predict(image)  # Returns a numpy array
 
-
-
-    # Display the result
-    # Display prediction probabilities for debugging
+    # Debug: Display prediction probabilities
     st.write(f"Prediction probabilities: {prediction}")
 
+    # Determine class based on threshold
     predicted_class = 1 if prediction[0][0] > 0.5 else 0  # Threshold: 0.5
     result = class_labels[predicted_class]
 
-    st.success(f"**{result}**")
-
-    
+    st.success(f"Result: {result}")
